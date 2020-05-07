@@ -53,6 +53,8 @@ function SEND_EMAIL_ON_CLICK() {
 
 /**
  * Updates the daily status of the active patch status.
+ * 
+ * NOTE: This method will be DEPRECATED. Use > DETAILED_DAILY_RECORD.
  */
 function DAILY_RECORD() { 
 
@@ -71,6 +73,61 @@ function DAILY_RECORD() {
         dailyRecordingsSheet.getRange(lastRow, counter + 1).setValue(dailyEmailSheet.getRange(dataCells[counter]).getValue());
     }
     Logger.log("Daily recording successfully updated");
+}
+
+/**
+ * Updates the daily status of the active patch status.
+ */
+function DETAILED_DAILY_RECORD() { 
+
+  // Get daily recordings sheet.
+  var detailedDailyRecordingsSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Daily Detailed Records");
+  
+  // Get the daily recordings sheet.
+  var lastRow = detailedDailyRecordingsSheet.getLastRow() + 1;
+
+  // --------FOLLOWING ARE THE DATA RANGES------
+  // Date.
+  var dateDataCells = ["G2"]
+
+  // Live fixes: bugs,features,security,connector,total
+  var inProgressDataCells = ["H8","I8","J8","K8","L8"];
+  var stagingDataCells = ["H9","I9","J9","K9","L9"];
+  var signingDataCells = ["H10","I10","J10","K10","L10"];
+  var notStartedCustomerDataCells = ["H11","I11","J11","K11","L11"];
+  var notStartedInternalDataCells = ["H12","I12","J12","K12","L12"];
+  var unassignedCustomerDataCells = ["H13","I13","J13","K13","L13"];
+  var unassignedInternalDataCells = ["H14","I14","J14","K14","L14"];
+  var teamDataCells = ["H4"];
+
+  // Pending WUM.
+  var issuesPendingWUMDataCells = ["H19","H20","H21","H22"];
+  var updatesPendingWUMDataCells = ["I19","I20","I21","I22"];
+
+  // TOTAL CASES
+  var issuesTotalDataCells = ["H26","H27","H28","H29","H30"];
+  var updatesTotalWUMDataCells = ["I26","I27","I28","I29","I30"];
+
+  // Released WUM.
+  var issuesReleasedDataCells = ["L26","L27","L28","L29","L30"];
+  var updatesReleasedWUMDataCells = ["M26","M27","M28","M29","M30"];
+
+  //----------------------------------------------
+  var dataCells = [dateDataCells, inProgressDataCells, stagingDataCells, signingDataCells, notStartedCustomerDataCells, notStartedInternalDataCells, unassignedCustomerDataCells,
+    unassignedInternalDataCells, teamDataCells, issuesPendingWUMDataCells, updatesPendingWUMDataCells, issuesTotalDataCells, updatesTotalWUMDataCells, issuesReleasedDataCells, 
+    updatesReleasedWUMDataCells];
+ 
+   // Get daily mailing sheet.
+  var dailyEmailSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Daily Email");
+  var columnCounter = 1;
+  for (var count = 0; count < dataCells.length ; count = count + 1) {
+    var dataCellArray = dataCells[count];
+    // Logger.log("Cell Array : "+ (count + 1));  
+    for(var count2 = 0; count2 < dataCellArray.length; count2 = count2 + 1){
+      detailedDailyRecordingsSheet.getRange(lastRow, columnCounter).setValue(dailyEmailSheet.getRange(dataCellArray[count2]).getValue());
+      columnCounter = columnCounter + 1;
+    }
+  }
 }
 
 //=================ADD ENTRY==========================ADD ENTRY============================ADD ENTRY===============================
