@@ -31,6 +31,48 @@ var released = "Released";
 var addPatchEntrySheetName = "Add Patch Entry";
 var patchDBSheetName = "Patch DataBase"
 
+
+//================Send EMAIL==========================Send EMAIL============================Send EMAIL=============================
+//=================================================================================================================================
+
+function SEND_EMAIL_ON_CLICK() { 
+
+    // Get the sheet where the data is in
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Daily Email Settings");
+
+    var dateSendingEmail = sheet.getRange("B3").getValue();
+    var subjectOfTheMail = sheet.getRange("B4").getValue();
+    var sendTo = sheet.getRange("A8").getValue();
+    var message = sheet.getRange("'Daily Email'!G6:M29").getValue();
+
+    GmailApp.sendEmail(sendTo, subjectOfTheMail, message);
+}
+
+//================Daily Record=======================Daily Record==========================Daily Record============================
+//=================================================================================================================================
+
+/**
+ * Updates the daily status of the active patch status.
+ */
+function DAILY_RECORD() { 
+
+    // Get daily recordings sheet.
+    var dailyRecordingsSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Daily Recordings");
+    
+    // Get the daily recordings sheet.
+    var lastRow = dailyRecordingsSheet.getLastRow() + 1;
+
+     // Get daily mailing sheet.
+    var dailyEmailSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Daily Email");
+
+    //Date,In Progress,Staging Tests,Sent For Signing,Not Started(Customer),Not Started(Internal),Unassigned(Customer),Unassigned(Internal),Team Members
+    var dataCells = ["G2","L8","L9","L10","L11","L12","L13","L14","H4"];
+    for(var counter = 0; counter < dataCells.length ; counter = counter + 1){
+        dailyRecordingsSheet.getRange(lastRow, counter + 1).setValue(dailyEmailSheet.getRange(dataCells[counter]).getValue());
+    }
+    Logger.log("Daily recording successfully updated");
+}
+
 //=================ADD ENTRY==========================ADD ENTRY============================ADD ENTRY===============================
 //=================================================================================================================================
 
