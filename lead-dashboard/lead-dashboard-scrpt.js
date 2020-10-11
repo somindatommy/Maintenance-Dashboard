@@ -1,16 +1,19 @@
 var addPatchEntryInputCells = ["D9","D7","H7","F11","D11","D13","H13","F13","H11","G9"];
 
-// patchid,queueDate,issue,purpose,type,product,priority,owner,component,status,update,accepted,started,signing,completed,notes,released,proactive
+// patchid,queueDate,issue,purpose,type,product,priority,owner,component,status,update,accepted,started,signing,completed,notes,released,proactive,pmt,staging - 20
+var newPatchLeadDashDataCells =["F6","I11","C6","I9","M9","K9","F9","C9","K15","C11","I17","K11","M11","K13","I15","C15","M13","C13","C17","I13"];
+
+// ***DEPRECATED*** // patchid,queueDate,issue,purpose,type,product,priority,owner,component,status,update,accepted,started,signing,completed,notes,released,proactive
 var patchLeadDashDataCells = ["D11","I18","D13","I13","F15","I11","F18","D18","D15","I15","G11","F21","H21","J21","I23","D23","G23","D21"];
 
-// patchid,queueDate,issue,purpose,type,product,priority,owner,component,status,update,accepted,started,signing,released,notes
+// ***DEPRECATED***// patchid,queueDate,issue,purpose,type,product,priority,owner,component,status,update,accepted,started,signing,released,notes
 var memberLeadDashDataCells = ["D9","I16","D11","I11","F13","I9","F16","D16","D13","I13","G9","D19","F19","H19","J19","D21"];
 
 var addEntryStatusCell = addPatchEntryInputCells[8];
 var addEntryTypeCell = addPatchEntryInputCells[2];
 var addEntryAcceptedCell = addPatchEntryInputCells[9];
 var addEntryQueueCell = addPatchEntryInputCells[0];
-var leadDashSearchPatchIDCell = "D6";
+var leadDashSearchPatchIDCell = "C3";
 var memberDashSearchPatchIDCell = "D5";
 
 var notStarted = "Not Started";
@@ -31,21 +34,39 @@ var released = "Released";
 var addPatchEntrySheetName = "Add Patch Entry";
 var patchDBSheetName = "Patch DataBase"
 
-
 //================Send EMAIL==========================Send EMAIL============================Send EMAIL=============================
 //=================================================================================================================================
 
-function SEND_EMAIL_ON_CLICK() { 
+/**
+ * Send Daily Email.
+ *
+ * @param {*} objectArray Placeholder map as key value pairs.
+ */
+function SEND_DAILY_EMAIL(objectArray) {
 
-    // Get the sheet where the data is in
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Daily Email Settings");
+  var emailTemplate = HtmlService.createTemplateFromFile("dailyEmailTemplate");
 
-    var dateSendingEmail = sheet.getRange("B3").getValue();
-    var subjectOfTheMail = sheet.getRange("B4").getValue();
-    var sendTo = sheet.getRange("A8").getValue();
-    var message = sheet.getRange("'Daily Email'!G6:M29").getValue();
+// Get the sheet where the data is in
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Daily Email Settings");
 
-    GmailApp.sendEmail(sendTo, subjectOfTheMail, message);
+  var subjectOfTheMail = sheet.getRange("B6").getValue();
+  var sendTo = sheet.getRange("B8").getValue();
+  var ccList = sheet.getRange("B9").getValue();
+
+  var htmlMsg = emailTemplate.evaluate().getContent();
+  var emailBody = replacePlaceHolders(htmlMsg,objectArray);
+
+  //Logger.log(sendTo);
+  //Logger.log(ccList);
+  GmailApp.sendEmail(
+    sendTo,
+    subjectOfTheMail,
+    "Your mailing app does not support HTML. Contact sominda@wso2.com or try with a different app.",
+    {
+      cc: ccList,
+      htmlBody: emailBody
+    }
+  );
 }
 
 //================Daily Record=======================Daily Record==========================Daily Record============================
@@ -53,14 +74,14 @@ function SEND_EMAIL_ON_CLICK() {
 
 /**
  * Updates the daily status of the active patch status.
- * 
+ *
  * NOTE: This method will be DEPRECATED. Use > DETAILED_DAILY_RECORD.
  */
-function DAILY_RECORD() { 
+function DAILY_RECORD() {
 
     // Get daily recordings sheet.
     var dailyRecordingsSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Daily Recordings");
-    
+
     // Get the daily recordings sheet.
     var lastRow = dailyRecordingsSheet.getLastRow() + 1;
 
@@ -78,19 +99,19 @@ function DAILY_RECORD() {
 /**
  * Updates the daily status of the active patch status.
  */
-function DETAILED_DAILY_RECORD() { 
+function DETAILED_DAILY_RECORD() {
 
   // Get daily recordings sheet.
   var detailedDailyRecordingsSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Daily Detailed Records");
-  
+
   // Get the daily recordings sheet.
   var lastRow = detailedDailyRecordingsSheet.getLastRow() + 1;
 
-  // --------FOLLOWING ARE THE DATA RANGES------
+  // --------FOLLOWING ARE THE DATA RANGES------These are the cells in the Daily Email Sheet.
   // Date.
-  var dateDataCells = ["G2"]
+  var dateDataCells = ["G2"];
 
-  // Live fixes: bugs,features,security,connector,total
+  // Live fixes: Bugs,Features,Sec,Connector,Total - "Bugs","Features","Sec","Connector","Total"
   var inProgressDataCells = ["H8","I8","J8","K8","L8"];
   var stagingDataCells = ["H9","I9","J9","K9","L9"];
   var signingDataCells = ["H10","I10","J10","K10","L10"];
@@ -100,51 +121,100 @@ function DETAILED_DAILY_RECORD() {
   var unassignedInternalDataCells = ["H14","I14","J14","K14","L14"];
   var teamDataCells = ["H4"];
 
-  // Pending WUM.
+  // Pending WUM. "Bugs","Features","Sec","Connector"
   var issuesPendingWUMDataCells = ["H19","H20","H21","H22"];
   var updatesPendingWUMDataCells = ["I19","I20","I21","I22"];
 
-  // TOTAL CASES
+  // TOTAL CASES "Bugs","Features","Sec","Connector","Total"
   var issuesTotalDataCells = ["H26","H27","H28","H29","H30"];
   var updatesTotalWUMDataCells = ["I26","I27","I28","I29","I30"];
 
-  // Released WUM.
+  // Released WUM. "Bugs","Features","Sec","Connector","Total"
   var issuesReleasedDataCells = ["L26","L27","L28","L29","L30"];
   var updatesReleasedWUMDataCells = ["M26","M27","M28","M29","M30"];
 
+  // Total Total cells
+  var totalTotalDataCells = ["H15","I15","J15","K15","L15"];
+
+  // Total Unassigned and not started data cells.
+  var totUnassignedAndNotStarted = ["H35","H36","I35","I36","H37","I37"];
+
   //----------------------------------------------
   var dataCells = [dateDataCells, inProgressDataCells, stagingDataCells, signingDataCells, notStartedCustomerDataCells, notStartedInternalDataCells, unassignedCustomerDataCells,
-    unassignedInternalDataCells, teamDataCells, issuesPendingWUMDataCells, updatesPendingWUMDataCells, issuesTotalDataCells, updatesTotalWUMDataCells, issuesReleasedDataCells, 
-    updatesReleasedWUMDataCells];
- 
-   // Get daily mailing sheet.
+    unassignedInternalDataCells, teamDataCells, issuesPendingWUMDataCells, updatesPendingWUMDataCells, issuesTotalDataCells, updatesTotalWUMDataCells, issuesReleasedDataCells,
+    updatesReleasedWUMDataCells, totalTotalDataCells, totUnassignedAndNotStarted];
+
+  // Data keys.  These are the keys in the email template.
+  var objectKeys = [
+    ["date"],
+    ["inProgressBugs","inProgressFeatures","inProgressSec","inProgressConnector","inProgressTotal"],
+    ["stagingBugs","stagingFeatures","stagingSec","stagingConnector","stagingTotal"],
+    ["signingBugs","signingFeatures","signingSec","signingConnector","signingTotal"],
+    ["notStartedCustBugs","notStartedCustFeatures","notStartedCustSec","notStartedCustConnector","notStartedCustTotal"],
+    ["notStartedIntBugs","notStartedIntFeatures","notStartedIntSec","notStartedIntConnector","notStartedIntTotal"],
+    ["unassignedCustBugs","unassignedCustFeatures","unassignedCustSec","unassignedCustConnector","unassignedCustTotal"],
+    ["unassignedIntBugs","unassignedIntFeatures","unassignedIntSec","unassignedIntConnector","unassignedIntTotal"],
+    ["team"],
+    ["issuesPendingWUMBugs","issuesPendingWUMFeatures","issuesPendingWUMSec","issuesPendingWUMConnector"],
+    ["updatesTotalWUMBugs","updatesTotalWUMFeatures","updatesTotalWUMSec","updatesTotalWUMConnector"],
+    ["issuesTotalBugs","issuesTotalFeatures","issuesTotalSec","issuesTotalConnector","issuesTotalTotal"],
+    ["updatesTotalBugs","updatesTotalFeatures","updatesTotalSec","updatesTotalConnector","updatesTotalTotal"],
+    ["issuesReleasedBugs","issuesReleasedFeatures","issuesReleasedSec","issuesReleasedConnector","issuesReleasedTotal"],
+    ["updatesReleasedWUMDBugs","updatesReleasedWUMDFeatures","updatesReleasedWUMDSec","updatesReleasedWUMDConnector","updatesReleasedWUMDTotal"],
+    ["totalBugs","totalFeatures","totalSec","totalConnector","totalTotal"],
+    ["unassignedCustaTotal","notStartedCustaTotal","unassignedInternalTotal","notStartedInternalTotal","custaTotalUnassignedNotStarted","internalTotalUnassignedNotStarted"],
+  ];
+
+  // Count the number of input fields in the sheet.
+  var totalInputFields = 0;
+  for (var count = 0; count < dataCells.length ; count = count + 1) {
+    var dataCellArray = dataCells[count];
+    for(var count2 = 0; count2 < dataCellArray.length; count2 = count2 + 1){
+      totalInputFields++;
+    }
+  }
+
+  // Create list for placeholder map.
+  var objectArray = new Array(totalInputFields);
+
+  // Get daily mailing sheet.
   var dailyEmailSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Daily Email");
   var columnCounter = 1;
   for (var count = 0; count < dataCells.length ; count = count + 1) {
     var dataCellArray = dataCells[count];
-    // Logger.log("Cell Array : "+ (count + 1));  
+    var keyArray = objectKeys[count];
     for(var count2 = 0; count2 < dataCellArray.length; count2 = count2 + 1){
-      detailedDailyRecordingsSheet.getRange(lastRow, columnCounter).setValue(dailyEmailSheet.getRange(dataCellArray[count2]).getValue());
+
+      // Build the key value pair for email template placeholders.
+      var value = dailyEmailSheet.getRange(dataCellArray[count2]).getValue();
+      objectArray[columnCounter - 1] = {[keyArray[count2]]:value};
+
+      // Add to sheet.
+      detailedDailyRecordingsSheet.getRange(lastRow, columnCounter).setValue(value);
       columnCounter = columnCounter + 1;
     }
   }
+  Logger.log("Daily data recorded successfully");
+  //var testString = "{{inProgressBugs}},{{inProgressFeatures}},{{inProgressSec}},{{inProgressConnector}},{{inProgressTotal}}";
+  //replacePlaceHolders(testString,objectArray);
+  SEND_DAILY_EMAIL(objectArray);
+  Logger.log("Daily patch summary email sent successfully");
 }
 
-//=================ADD ENTRY==========================ADD ENTRY============================ADD ENTRY===============================
+//======================ON OPEN=============================ON OPEN=======================================ON OPEN==================
 //=================================================================================================================================
-
 /**
 * What happen when someone perform a reload
 */
 function onOpen() {
-  
+
   // Get sheet SpreadsheetApp object.
   var spreadSheetApp = SpreadsheetApp;
-  
+
   // Get the current active sheet.
   var targetSheet = spreadSheetApp.getActiveSpreadsheet().getActiveSheet();
   var activeSheetName = targetSheet.getName();
-  
+
   // Set the default values ONLY if the sheet is Add patch Entry.
   if(addPatchEntrySheetName == activeSheetName){
     var targetSheet = spreadSheetApp.getActiveSpreadsheet().getSheetByName("Add Patch Entry");
@@ -168,24 +238,37 @@ function setDefaultValuesInAddPatchEntry(targetSheet){
 }
 
 /**
+* Daily set the default values in "Add Patch Entry" sheet.
+*/
+function setDailyDefaultValues(){
+
+  // Get sheet SpreadsheetApp object.
+  var spreadSheetApp = SpreadsheetApp;
+  var targetSheet = spreadSheetApp.getActiveSpreadsheet().getSheetByName("Add Patch Entry");
+  setDefaultValuesInAddPatchEntry(targetSheet);
+}
+//=================ADD ENTRY==========================ADD ENTRY============================ADD ENTRY===============================
+//=================================================================================================================================
+
+/**
 * Add the issue entry to the given sheet.
 * @customFunction
 */
 function ADDENTRY() {
-  
+
   // Get sheet SpreadsheetApp object.
   var spreadSheetApp = SpreadsheetApp;
-  
+
   // Get the current working sheet where the user input the value.
   var activeSheet = spreadSheetApp.getActiveSpreadsheet().getActiveSheet();
   var activeSheetName = activeSheet.getName();
-  
+
   if(addPatchEntrySheetName == activeSheetName){
     var ui = spreadSheetApp.getUi();
-    
+
     // Input column cells.
     var cells = addPatchEntryInputCells;
-    
+
     // Get input values.
     var queueDate = activeSheet.getRange(cells[0]).getValue();
     var issue = activeSheet.getRange(cells[1]).getValue();
@@ -198,29 +281,29 @@ function ADDENTRY() {
     var status = activeSheet.getRange(cells[8]).getValue();
     var acceptedDate = activeSheet.getRange(cells[9]).getValue();
     if(validateAddEntryInputs(spreadSheetApp,queueDate,issue,purpose,type,product,status,acceptedDate,priority)){
-  
+
       if(notStarted == status && isEmpty(owner)){
         ui.alert("Please assign a OWNER since the patch status is : " + status);
         return false;
       }
-      
+
       // Get the target sheet where the values should be stored.
       var targetSheet = spreadSheetApp.getActiveSpreadsheet().getSheetByName(patchDBSheetName);
-      
+
       // Get the last row of the issue entries.
       var lastRow = targetSheet.getLastRow();
-      lastRow = lastRow + 1; 
+      lastRow = lastRow + 1;
       //Logger.log("ADDENTRY: Patch Entry row > " + lastRow);
-      
+
       var patchID = lastRow-1;
       //Logger.log("ADDENTRY: Patch ID > " + patchID);
-      
+
       // Create the input data in order to match the columns order.// ADD an EMPTY STRING FOR PATCH NUMBER COLUMN.
       var valuesList = [patchID,queueDate,issue,purpose,type,product,priority,owner,component,status,"",acceptedDate];
-      
+
       // Get user conset to add the issue.
       var getConsentFromUI = ui.alert("Do you want to add the entry to the issues list?", ui.ButtonSet.YES_NO);
-      
+
       // Update the DB.
       if(getConsentFromUI == ui.Button.YES){
         for(var column = 1; column < 13;column = column + 1){
@@ -230,7 +313,7 @@ function ADDENTRY() {
         setDefaultValuesInAddPatchEntry(activeSheet);
       }
     } else {
-      Logger.log("ADDENTRY: Invalid entry"); 
+      Logger.log("ADDENTRY: Invalid entry");
     }
   }
 }
@@ -260,20 +343,20 @@ function validateAddEntryInputs(spreadSheetApp,queueDate,issue,purpose,type,prod
 function GET_PATCH_ENTRY_MEMBER(){
 
   var spreadSheetApp = SpreadsheetApp;
-  
+
   // Get the current active sheet.
   var currentSheet = spreadSheetApp.getActiveSpreadsheet().getActiveSheet();
   var patchID = currentSheet.getRange(memberDashSearchPatchIDCell).getValue();
-  
+
   if(!isEmpty(patchID)){
     // Logger.log("GET_PATCH_ENTRY: Requested patch ID : " + patchID);
     var rowId = patchID + 1;
     Logger.log("GET_PATCH_ENTRY: Requested patch entry row : " + rowId);
-    
+
     // DB connection.
     var patchDBSheet = spreadSheetApp.getActiveSpreadsheet().getSheetByName(patchDBSheetName);
     var dataArray = new Array(16);
-    
+
     // patchid,queue date,issue,purpose,type,product,priority,owner,component,status,update,accepted,started,signing,completed,notes,relased,proactive.
     for(var column = 1; column < 18 ; column = column + 1){
     var value = patchDBSheet.getRange(rowId, column).getValue();
@@ -327,7 +410,7 @@ function UPDATE_ENTRY_MEMBER(){
   var rowID = dataArray[0]+1;
   var patchID = dataArray[0];
   var updateNumber = dataArray[10];
-  
+
   var ui = spreadSheetApp.getUi();
   var patchStatus = dataArray[9];
   var today = new Date();
@@ -380,14 +463,14 @@ function UPDATE_ENTRY_MEMBER(){
         for(var counter = 0; counter < 16 ; counter = counter + 1){
             currentSheet.getRange(cells[counter]).setValue("");
         }
-        ui.alert("Patch : "+ patchID +" successfully updated to the DB");    
+        ui.alert("Patch : "+ patchID +" successfully updated to the DB");
     }
   }
 }
 
 /**
  * Validate a complete patch entry.
- * 
+ *
  * @param {*} ui UI object
  * @param {*} dataArray Array with data from the UI.
  */
@@ -407,26 +490,27 @@ function validateCompletedMemberEntryEntry(ui,dataArray){
 //=================================================================================================================================
 
 /**
+* **DEPRECATED***
 * Get patch entry button in the lead dashboard.
 */
 function GET_PATCH_ENTRY_LEAD(){
 
   // Get sheet SpreadsheetApp object.
   var spreadSheetApp = SpreadsheetApp;
-  
+
   // Get the current active sheet.
   var currentSheet = spreadSheetApp.getActiveSpreadsheet().getActiveSheet();
-  var patchID = currentSheet.getRange(leadDashSearchPatchIDCell).getValue();
-  
+  var patchID = currentSheet.getRange("D6").getValue();
+
   if(!isEmpty(patchID)){
     // Logger.log("GET_PATCH_ENTRY: Requested patch ID : " + patchID);
     var rowId = patchID + 1;
     Logger.log("GET_PATCH_ENTRY: Requested patch entry row : " + rowId);
-    
+
     // DB connection.
     var patchDBSheet = spreadSheetApp.getActiveSpreadsheet().getSheetByName(patchDBSheetName);
     var dataArray = new Array(16);
-    
+
     // order ::: patchid,queueDate,issue,purpose,type,product,priority,owner,component,status,update,accepted,started,signing,completed,notes,released,proactive.
     for(var column = 1; column < 19 ; column = column + 1){
     var value = patchDBSheet.getRange(rowId, column).getValue();
@@ -448,6 +532,112 @@ function GET_PATCH_ENTRY_LEAD(){
 }
 
 /**
+* Get patch entry button in the lead dashboard.
+*/
+function GET_PATCH_ENTRY_BY_LEAD1(){
+
+  // Get sheet SpreadsheetApp object.
+  var spreadSheetApp = SpreadsheetApp;
+
+  // Get the current active sheet.
+  var currentSheet = spreadSheetApp.getActiveSpreadsheet().getActiveSheet();
+  var patchID = currentSheet.getRange(leadDashSearchPatchIDCell).getValue();
+
+  if(!isEmpty(patchID)){
+    var rowId = patchID + 1;
+    Logger.log("GET_PATCH_ENTRY_BY_LEAD1: Requested patch entry row : " + rowId);
+
+    // DB connection.
+    var patchDBSheet = spreadSheetApp.getActiveSpreadsheet().getSheetByName(patchDBSheetName);
+    var dataArray = new Array(newPatchLeadDashDataCells.length);
+
+    // order ::: patchid,queueDate,issue,purpose,type,product,priority,owner,component,status,update,accepted,started,signing,completed,notes,released,proactive.
+    for(var column = 1; column < newPatchLeadDashDataCells.length + 1 ; column = column + 1){
+      var value = patchDBSheet.getRange(rowId, column).getValue();
+      dataArray[column - 1] = value;
+    }
+    // patchid,queue date,issue,purpose,type,product,priority,owner,component,status,update,accepted,started,signing,completed,notes,released,proactive.
+    var cells = newPatchLeadDashDataCells;
+    for(var counter = 0; counter < newPatchLeadDashDataCells.length ; counter = counter + 1){
+        currentSheet.getRange(cells[counter]).setValue("");
+    }
+    for(var counter = 0; counter < newPatchLeadDashDataCells.length ; counter = counter + 1){
+        currentSheet.getRange(cells[counter]).setValue(dataArray[counter]);
+    }
+  } else {
+    Logger.log("GET_PATCH_ENTRY: Empty patch ID");
+    var ui = spreadSheetApp.getUi();
+    ui.alert("Enter a patch ID");
+  }
+}
+
+
+/**
+* Update a patch entry from the patch lead dashboard.
+*/
+function UPDATE_ENTRY_LEAD_NEW(){
+
+  var spreadSheetApp = SpreadsheetApp;
+  var ui = spreadSheetApp.getUi();
+  var currentSheet = spreadSheetApp.getActiveSpreadsheet().getActiveSheet();
+  var patchDBSheet = spreadSheetApp.getActiveSpreadsheet().getSheetByName(patchDBSheetName);
+
+  // patchid,queueDate,issue,purpose,type,product,priority,owner,component,status,update,accepted,started,signing,completed,notes,released,proactive,pmt,staging
+  var dataArray = new Array(newPatchLeadDashDataCells.length);
+  for(var counter = 0 ; counter < newPatchLeadDashDataCells.length ; counter++){
+    dataArray[counter] = currentSheet.getRange(newPatchLeadDashDataCells[counter]).getValue();
+  }
+
+  var patchID = dataArray[0];
+  var patchStatus = dataArray[9];
+  var owner = dataArray[7];
+
+  // Validate patch owner with the status.
+  if((notStarted == patchStatus || done == patchStatus || released == patchStatus) && isEmpty(owner)){
+    ui.alert("Assign a OWNER since the patch status is : " + patchStatus);
+    return false;
+  }
+
+  if(unassigned == patchStatus && !isEmpty(owner)){
+    ui.alert("Remove the OWNER since the patch status is : " + patchStatus);
+    return false;
+  }
+
+  // Validate complete entry.
+  var completeEntry = true;
+  if(done == patchStatus){
+    completeEntry = validateCompletedLeadPatchEntry(ui,dataArray);
+    if(isEmpty(dataArray[14])){
+        dataArray[14] = new Date();
+    }
+  }
+  if(validateCommons(ui,dataArray[2],dataArray[3],dataArray[4],dataArray[5],patchStatus,dataArray[6]) && completeEntry){
+
+    // Row of the DB to be updated.
+    var rowID = patchID + 1;
+    // Get consent.
+    var getConsentFromUI = ui.alert("Do you want update the Entry: " + patchID + "?", ui.ButtonSet.YES_NO);
+    if(getConsentFromUI == ui.Button.YES){
+      // Priority,Owner,Status,Proactive,Notes,PMT.
+      // Columns: G,H,J,R,P,S.
+      var columns = [7,8,10,15,18,16,19];
+      patchDBSheet.getRange(rowID, columns[0]).setValue(dataArray[6]);
+      patchDBSheet.getRange(rowID, columns[1]).setValue(dataArray[7]);
+      patchDBSheet.getRange(rowID, columns[2]).setValue(dataArray[9]);
+      patchDBSheet.getRange(rowID, columns[3]).setValue(dataArray[14]);
+      patchDBSheet.getRange(rowID, columns[4]).setValue(dataArray[17]);
+      patchDBSheet.getRange(rowID, columns[5]).setValue(dataArray[15]);
+      patchDBSheet.getRange(rowID, columns[6]).setValue(dataArray[18]);
+
+      for(var counter = 0; counter < newPatchLeadDashDataCells.length ; counter++){
+        currentSheet.getRange(newPatchLeadDashDataCells[counter]).setValue("");
+      }
+      ui.alert("Patch : "+ patchID +" successfully updated to the DB");
+    }
+  }
+}
+
+/**
 * Update a patch entry from the patch lead dashboard.
 */
 function UPDATE_ENTRY_LEAD(){
@@ -463,9 +653,9 @@ function UPDATE_ENTRY_LEAD(){
   var patchDBSheet = spreadSheetApp.getActiveSpreadsheet().getSheetByName(patchDBSheetName);
   var rowID = dataArray[0]+1;
   var patchID = dataArray[0];
-  
+
   var ui = spreadSheetApp.getUi();
-  
+
   // Validate patch owner with the status
   var patchStatus = dataArray[9];
   var owner = dataArray[7];
@@ -483,14 +673,14 @@ function UPDATE_ENTRY_LEAD(){
     completeEntry = validateCompletedLeadEntry(ui,dataArray);
     if(isEmpty(dataArray[14])){
         dataArray[14] = new Date();
-    } 
+    }
   }
   if(validateCommons(ui,dataArray[2],dataArray[3],dataArray[4],dataArray[5],patchStatus,dataArray[6]) && completeEntry){
-    
+
     // Get consent.
     var getConsentFromUI = ui.alert("Do you want update the Entry: " + patchID + "?", ui.ButtonSet.YES_NO);
     if(getConsentFromUI == ui.Button.YES){
-      // Purpose,Type,Product,Priority,owner,component,status,completed,proactive  
+      // Purpose,Type,Product,Priority,owner,component,status,completed,proactive
       var columns = [4,5,6,7,8,9,10,15,16,18];
       patchDBSheet.getRange(rowID, columns[0]).setValue(dataArray[3]);
       patchDBSheet.getRange(rowID, columns[1]).setValue(dataArray[4]);
@@ -513,7 +703,33 @@ function UPDATE_ENTRY_LEAD(){
 
 /**
  * Validate a complete patch entry.
- * 
+ *
+ * @param {*} ui UI object
+ * @param {*} dataArray Array with data from the UI.
+ */
+function validateCompletedLeadPatchEntry(ui,dataArray){
+
+  // patchid,queueDate,issue,purpose,type,product,priority,owner,component,status,update,accepted,started,signing,completed,notes,released,proactive,pmt,staging.
+  var scenarios = ["Patch Id", "Patch Queue Date","Issue","Purpose","Patch Type","Product Version", "Patch Priority","Owner","Component","Status","Update Number",
+  "Patch Entry Accepted Date","Development Started Date","Patch Sent for Signing Date","Patch Completed Date","Empty Notes","Patch Released Date","Proactive Status",
+  "PMT link","Staging date"];
+  for(var counter  = 0 ; counter < scenarios.length ; counter = counter + 1){
+
+    // 14 - completed,15 - notes
+    if(!(counter == 14 || counter == 15)){
+        if(isEmpty(dataArray[counter])){
+            ui.alert("Incomplete patch entry. Missing : " + scenarios[counter]);
+            return false;
+        }
+    }
+  }
+  return true;
+}
+
+/**
+ * DEPRECATED.
+ * Validate a complete patch entry.
+ *
  * @param {*} ui UI object
  * @param {*} dataArray Array with data from the UI.
  */
@@ -537,7 +753,7 @@ function validateCompletedLeadEntry(ui,dataArray){
 
 /**
  * Check for an empty string value.
- * 
+ *
  * @param {*} str Any string value.
  */
 function isEmpty(str) {
@@ -546,7 +762,7 @@ function isEmpty(str) {
 
 /**
  * Validate common attributes of a patch entry.
- * 
+ *
  * @param {*} ui Ui object
  * @param {*} issue Issue
  * @param {*} purpose Purpose
@@ -555,13 +771,13 @@ function isEmpty(str) {
  * @param {*} status Status
  */
 function validateCommons(ui,issue,purpose,type,product,status,priority){
-  
+
   //Logger.log("validateCommons: issue > " + issue);
   //Logger.log("validateCommons: purpose > " + purpose);
   //Logger.log("validateCommons: type > " + type);
   //Logger.log("validateCommons: product > " + product);
   //Logger.log("validateCommons: status > " + status);
-  
+
   if(isEmpty(issue)){
     ui.alert("Add an Issue");
     return false;
@@ -587,4 +803,25 @@ function validateCommons(ui,issue,purpose,type,product,status,priority){
     return false;
   }
   return true;
+}
+
+/**
+ * Replace the placehoders in a string in the format of {{placeHolder}}.
+ *
+ * @param {String} template Email template in the String format.
+ * @param {Array} objectArray PlaceHolders list. Eg: [{placeHolder1:value1},{placeHolder2:value2}]
+ */
+function replacePlaceHolders(template,objectArray){
+
+  for (let index = 0; index < objectArray.length; index++) {
+    var placeHolderObject = objectArray[index];
+    for (let [key, value] of Object.entries(placeHolderObject)) {
+      var placeholderkey = "{{"+ key +"}}";
+      var placeholderValue = ""+ value +"";
+      // Logger.log('placeholdes:'+placeholderkey+' : '+placeholderValue);
+      template = template.replace(placeholderkey, placeholderValue);
+    }
+  }
+  //Logger.log(template);
+  return template;
 }
