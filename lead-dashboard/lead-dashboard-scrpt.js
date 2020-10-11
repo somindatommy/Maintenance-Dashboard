@@ -46,7 +46,7 @@ function SEND_DAILY_EMAIL(objectArray) {
 
   var emailTemplate = HtmlService.createTemplateFromFile("dailyEmailTemplate");
 
-// Get the sheet where the data is in
+  // Get the sheet where the data is in.
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Daily Email Settings");
 
   var subjectOfTheMail = sheet.getRange("B6").getValue();
@@ -58,6 +58,8 @@ function SEND_DAILY_EMAIL(objectArray) {
 
   //Logger.log(sendTo);
   //Logger.log(ccList);
+
+  // References: https://developers.google.com/apps-script/reference/gmail/gmail-app#sendemailrecipient,-subject,-body,-options
   GmailApp.sendEmail(
     sendTo,
     subjectOfTheMail,
@@ -69,11 +71,44 @@ function SEND_DAILY_EMAIL(objectArray) {
   );
 }
 
+/**
+ * Send Daily Email.
+ *
+ * @param {*} objectArray Placeholder map as key value pairs.
+ */
+function SEND_WELCOME_EMAIL(objectArray) {
+
+  var emailTemplate = HtmlService.createTemplateFromFile("welcomeEmailTemplate");
+
+  // Get the sheet where the data is in.
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Welcome Email Settings");
+
+  var subjectOfTheMail = sheet.getRange("B4").getValue();
+  var sendTo = sheet.getRange("B6").getValue();
+
+  var emailBody = emailTemplate.evaluate().getContent();
+
+  //Logger.log(sendTo);
+
+  // References: https://developers.google.com/apps-script/reference/gmail/gmail-app#sendemailrecipient,-subject,-body,-options
+  GmailApp.sendEmail(
+    sendTo,
+    subjectOfTheMail,
+    "Your mailing app does not support HTML. Contact sominda@wso2.com or try with a different app.",
+    {
+      htmlBody: emailBody
+    }
+  );
+
+  Logger.log("Welcome Email Sent Successfully");
+}
+
+
 //================Daily Record=======================Daily Record==========================Daily Record============================
 //=================================================================================================================================
 
 /**
- * Updates the daily status of the active patch status.
+ * DEPRECATED----Updates the daily status of the active patch status.
  *
  * NOTE: This method will be DEPRECATED. Use > DETAILED_DAILY_RECORD.
  */
