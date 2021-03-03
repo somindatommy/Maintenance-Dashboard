@@ -34,7 +34,7 @@ var released = "Released";
 var addPatchEntrySheetName = "Add Patch Entry";
 var patchDBSheetName = "Patch DataBase"
 
-var umtMaintenanceDashBoardURL = "https://docs.google.com/spreadsheets/d/14mqnkwTTfwnt3zIasjKoN4ffFfWbD0W-Afc27K8GwP4/edit"
+var umtMaintenanceDashBoardURL = "https://docs.google.com/spreadsheets/d/1tIkemy9N4drE6vkxRZopBHJhvOM1DmuLoqmnV8JuCz4/edit"
 
 //================Send EMAIL==========================Send EMAIL============================Send EMAIL=============================
 //=================================================================================================================================
