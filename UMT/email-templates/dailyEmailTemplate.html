@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <base target="_top">
+    <style type="text/css">
+	body {
+		font-family: -apple-system, BlinkMacSystemFont, Segoe WPC, Segoe UI, HelveticaNeue-Light, Ubuntu, Droid Sans, sans-serif, font-awesome, 'Helvetica Neue', Arial, Helvetica, sans-serif;
+		background: rgb(232, 232, 232);
+	}
+
+	h4 {
+		text-align: center;
+		padding-top: 5px;
+	}
+
+	.container {
+		display: block;
+		max-width: 100% !important;
+	}
+
+	@media only screen and (min-width: 1200px) {
+		.container {
+			width: 1127px;
+			margin-left: auto !important;
+			margin-right: auto !important;
+		}
+	}
+
+	.card {
+		background-color: #ffffff;
+		border-radius: 15px;
+	}
+
+	.card-header {
+		padding: 1em 4em;
+		border-bottom: 1px solid #e8e8e8;
+	}
+
+	.patch-stats-card-header .business-unit {
+		margin-bottom: 7px;
+		color: #001131;
+		font-weight: 600;
+		text-decoration: none;
+		font-size: 30px;
+		line-height: 30px;
+		text-align: center;
+	}
+
+	.patch-stats-card-header .date {
+		color: #999696;
+		font-weight: 500;
+		text-decoration: none;
+		font-size: 18px;
+		line-height: 30px;
+	}
+
+	.patch-stats-card-header .team-member-count {
+		color: #999696;
+		font-weight: 500;
+		text-decoration: none;
+		font-size: 18px;
+		line-height: 30px;
+	}
+
+	.card-content {
+		padding: 0em 4em;
+	}
+
+	.text-centered {
+		text-align: center;
+	}
+
+	.table {
+		border-collapse: collapse;
+		width: 80%;
+		margin-left: auto;
+		margin-right: auto;
+	}
+
+	.table td,
+	.table th {
+		border: 1px solid #ddd;
+		padding: 6px;
+		font-weight: 400;
+		text-align: center;
+	}
+
+	.table th {
+		width: 80px;
+		padding-top: 12px;
+		padding-bottom: 12px;
+		text-align: center;
+		background-color: #f9fafb;
+		font-size: 17px;
+		font-weight: 700;
+		color: rgba(0, 0, 0, .87);
+	}
+
+	.table tr.total {
+		font-weight: 700;
+		background-color: #f9fafb;
+	}
+
+	#inprogress {
+		background: #fee599;
+	}
+
+	#staging {
+		background: #a3c2f4;
+	}
+
+	#signing {
+		background: #93c47c;
+	}
+
+	#not-started-customer,
+	#not-started-internal {
+		background: #f6b26a;
+	}
+
+	#unsigned-customer,
+	#unsigned-internal {
+		background: #e16566;
+	}
+
+	#left,
+	#right {
+		width: 49%;
+		display: inline-block;
+	}
+
+	.email-signature-container {
+		margin-top: 3em;
+		border-top: 1px solid #e8e8e8;
+		padding-top: 2em;
+		text-align: left;
+	}
+	</style>
+</head>
+
+<body>
+<div dir="ltr">
+    <div class="container">
+        <div class="card patch-stats-card">
+            <div class="card-header patch-stats-card-header">
+                <h2 class="business-unit">IAM BU - Maintenance Summary</h2>
+                <div class="date">Date - {{date}}</div>
+                <div class="team-member-count">Patch Team Members: {{team}}</div>
+            </div>
+            <div class="card-content">
+                <!-- Current Maintenance Status -->
+                <div class="card maintenance-stats-table-container">
+                    <h4>Current Maintenance Status</h4>
+                    <table class="table" id="maintenance-stats-table">
+                        <tbody>
+                        <tr>
+                            <th style="width: 160px;">Status</th>
+                            <th>Bugs</th>
+                            <th>Features/ Improvement</th>
+                            <th>Security</th>
+                            <th>Connector</th>
+                            <th>TOTAL</th>
+                        </tr>
+                        <tr>
+                            <td id="inprogress">In progress</td>
+                            <td>{{inProgressBugs}}</td>
+                            <td>{{inProgressFeatures}}</td>
+                            <td>{{inProgressSec}}</td>
+                            <td>{{inProgressConnector}}</td>
+                            <td>{{inProgressTotal}}</td>
+                        </tr>
+                        <tr>
+                            <td id="staging">Staging Tests</td>
+                            <td>{{stagingBugs}}</td>
+                            <td>{{stagingFeatures}}</td>
+                            <td>{{stagingSec}}</td>
+                            <td>{{stagingConnector}}</td>
+                            <td>{{stagingTotal}}</td>
+                        </tr>
+                        <tr>
+                            <td id="signing">Sent for Signing</td>
+                            <td>{{signingBugs}}</td>
+                            <td>{{signingFeatures}}</td>
+                            <td>{{signingSec}}</td>
+                            <td>{{signingConnector}}</td>
+                            <td>{{signingTotal}}</td>
+                        </tr>
+                        <tr>
+                            <td id="not-started-customer">Not Started (Customer)</td>
+                            <td>{{notStartedCustBugs}}</td>
+                            <td>{{notStartedCustFeatures}}</td>
+                            <td>{{notStartedCustSec}}</td>
+                            <td>{{notStartedCustConnector}}</td>
+                            <td>{{notStartedCustTotal}}</td>
+                        </tr>
+                        <tr>
+                            <td id="not-started-internal">Not Started (Internal)</td>
+                            <td>{{notStartedIntBugs}}</td>
+                            <td>{{notStartedIntFeatures}}</td>
+                            <td>{{notStartedIntSec}}</td>
+                            <td>{{notStartedIntConnector}}</td>
+                            <td>{{notStartedIntTotal}}</td>
+                        </tr>
+                        <tr>
+                            <td id="unsigned-customer">Unassigned (Customer)</td>
+                            <td>{{unassignedCustBugs}}</td>
+                            <td>{{unassignedCustFeatures}}</td>
+                            <td>{{unassignedCustSec}}</td>
+                            <td>{{unassignedCustConnector}}</td>
+                            <td><strong>{{unassignedCustTotal}}</strong></td>
+                        </tr>
+                        <tr>
+                            <td id="unsigned-internal">Unassigned (Internal)</td>
+                            <td>{{unassignedIntBugs}}</td>
+                            <td>{{unassignedIntFeatures}}</td>
+                            <td>{{unassignedIntSec}}</td>
+                            <td>{{unassignedIntConnector}}</td>
+                            <td>{{unassignedIntTotal}}</td>
+                        </tr>
+                        <tr class="total">
+                            <td>TOTAL</td>
+                            <td>{{totalBugs}}</td>
+                            <td>{{totalFeatures}}</td>
+                            <td>{{totalSec}}</td>
+                            <td>{{totalConnector}}</td>
+                            <td>{{totalTotal}}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Pending WUM Updates -->
+                <div class="pending-wum-updates-table-container">
+                    <h4>Pending WUM Updates</h4>
+                    <table class="table" id="pending-wum-updates-table" style="width: 60%;">
+                        <tbody>
+                        <tr>
+                            <th style="width: 160px;"></th>
+                            <th>Issues</th>
+                            <th>Updates</th>
+                        </tr>
+                        <tr>
+                            <td id="bugs">Bugs</td>
+                            <td>{{issuesPendingWUMBugs}}</td>
+                            <td>{{updatesTotalWUMBugs}}</td>
+                        </tr>
+                        <tr>
+                            <td id="features">Features/Improvements</td>
+                            <td>{{issuesPendingWUMFeatures}}</td>
+                            <td>{{updatesTotalWUMFeatures}}</td>
+                        </tr>
+                        <tr>
+                            <td id="security">Security</td>
+                            <td>{{issuesPendingWUMSec}}</td>
+                            <td>{{updatesTotalWUMSec}}</td>
+                        </tr>
+                        <tr>
+                            <td id="connector">Connector</td>
+                            <td>{{issuesPendingWUMConnector}}</td>
+                            <td>{{updatesTotalWUMConnector}}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Total Reported Cases -->
+                <div class="total-reported-cases-table-container" id="left">
+                    <h4>Total Reported Cases</h4>
+                    <table class="table" id="total-reported-cases-table">
+                        <tbody>
+                        <tr>
+                            <th></th>
+                            <th>Issues</th>
+                            <th>Updates</th>
+                        </tr>
+                        <tr>
+                            <td id="bugs">Bugs</td>
+                            <td>{{issuesTotalBugs}}</td>
+                            <td>{{updatesTotalBugs}}</td>
+                        </tr>
+                        <tr>
+                            <td id="features">Features/ Improvements</td>
+                            <td>{{issuesTotalFeatures}}</td>
+                            <td>{{updatesTotalFeatures}}</td>
+                        </tr>
+                        <tr>
+                            <td id="security">Security</td>
+                            <td>{{issuesTotalSec}}</td>
+                            <td>{{updatesTotalSec}}</td>
+                        </tr>
+                        <tr>
+                            <td id="connector">Connector</td>
+                            <td>{{issuesTotalConnector}}</td>
+                            <td>{{updatesTotalConnector}}</td>
+                        </tr>
+                        <tr class="total">
+                            <td>TOTAL</td>
+                            <td>{{issuesTotalTotal}}</td>
+                            <td>{{updatesTotalTotal}}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Released WUM Updates -->
+                <div class="released-wum-updates-table-container" id="right">
+                    <h4>Released WUM Updates</h4>
+                    <table class="table" id="released-wum-updates-table">
+                        <tbody>
+                        <tr>
+                            <th></th>
+                            <th>Issues</th>
+                            <th>Updates</th>
+                        </tr>
+                        <tr>
+                            <td id="bugs">Bugs</td>
+                            <td>{{issuesReleasedBugs}}</td>
+                            <td>{{updatesReleasedWUMDBugs}}</td>
+                        </tr>
+                        <tr>
+                            <td id="features">Features/ Improvements</td>
+                            <td>{{issuesReleasedFeatures}}</td>
+                            <td>{{updatesReleasedWUMDFeatures}}</td>
+                        </tr>
+                        <tr>
+                            <td id="security">Security</td>
+                            <td>{{issuesReleasedSec}}</td>
+                            <td>{{updatesReleasedWUMDSec}}</td>
+                        </tr>
+                        <tr>
+                            <td id="connector">Connector</td>
+                            <td>{{issuesReleasedConnector}}</td>
+                            <td>{{updatesReleasedWUMDConnector}}</td>
+                        </tr>
+                        <tr class="total">
+                            <td>TOTAL</td>
+                            <td>{{issuesReleasedTotal}}</td>
+                            <td>{{updatesReleasedWUMDTotal}}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pending-wum-updates-table-container">
+                    <h4>Unassigned & Not Started patches</h4>
+                    <table class="table" id="pending-wum-updates-table" style="width: 60%;">
+                        <tbody>
+                        <tr>
+                            <th style="width: 160px;"></th>
+                            <th>Customer</th>
+                            <th>Internal</th>
+                        </tr>
+                        <tr>
+                            <td id="bugs">Unassigned</td>
+                            <td>{{unassignedCustaTotal}}</td>
+                            <td>{{unassignedInternalTotal}}</td>
+                        </tr>
+                        <tr>
+                            <td id="features">Not started</td>
+                            <td>{{notStartedCustaTotal}}</td>
+                            <td>{{notStartedInternalTotal}}</td>
+                        </tr>
+                        <tr class="total">
+                            <td>TOTAL</td>
+                            <td>{{custaTotalUnassignedNotStarted}}</td>
+                            <td>{{internalTotalUnassignedNotStarted}}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Email Signature -->
+                <div class="email-signature-container">
+                    <div dir="ltr" class="gmail_signature" data-smartmail="gmail_signature">
+                        <div dir="ltr"> <span style="color:rgb(136,136,136)">
+											<b>Sominda Gamage</b> | Senior Software Engineer| 
+
+										</span> <a href="http://wso2.com/" style="color:rgb(17,85,204)" target="_blank">WSO2 Inc.</a>
+                            <div style="color:rgb(136,136,136)">(M)+94 719873902 | (E)  <a href="mailto:Sominda@wso2.com" style="color:rgb(17,85,204)" target="_blank">sominda@wso2.com</a> </div>
+                            <div style="color:rgb(136,136,136)">
+                                <a href="https://wso2.com/signature" style="color:rgb(17,85,204)" target="_blank"> <img src="https://ci6.googleusercontent.com/proxy/qfv82XdpdVx1OWQma34s1PEq0PosMfoTt2j6jD3R9pC-lQ-cRrKDyB7BAti-nCsi94bkaqBAPf1B1BDbxeYh-_oGpwQ_msravuQFG1sLtNDNHN740mQA=s0-d-e1-ft#http://c.content.wso2.com/signatures/wso2-mail-signature-general.png"> </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+
+</html>
+
