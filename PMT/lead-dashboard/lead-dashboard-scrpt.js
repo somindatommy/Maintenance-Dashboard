@@ -34,6 +34,8 @@ var released = "Released";
 var addPatchEntrySheetName = "Add Patch Entry";
 var patchDBSheetName = "Patch DataBase"
 
+var umtMaintenanceDashBoardURL = "https://docs.google.com/spreadsheets/d/14mqnkwTTfwnt3zIasjKoN4ffFfWbD0W-Afc27K8GwP4/edit"
+
 //================Send EMAIL==========================Send EMAIL============================Send EMAIL=============================
 //=================================================================================================================================
 
@@ -230,8 +232,6 @@ function DETAILED_DAILY_RECORD() {
     }
   }
   Logger.log("Daily data recorded successfully");
-  //var testString = "{{inProgressBugs}},{{inProgressFeatures}},{{inProgressSec}},{{inProgressConnector}},{{inProgressTotal}}";
-  //replacePlaceHolders(testString,objectArray);
   var umtObjectArray = UPDATE_U2_DETAILS();
   var totalObjectArray = objectArray.concat(umtObjectArray);
   SEND_DAILY_EMAIL(totalObjectArray);
@@ -243,8 +243,7 @@ function DETAILED_DAILY_RECORD() {
  */
 function UPDATE_U2_DETAILS(){
 
-  var umtMaintenanceDbURL = "https://docs.google.com/spreadsheets/d/1tIkemy9N4drE6vkxRZopBHJhvOM1DmuLoqmnV8JuCz4/edit?usp=sharing"
-  var umtMaintenanceDashboard = SpreadsheetApp.openByUrl(umtMaintenanceDbURL);
+  var umtMaintenanceDashboard = SpreadsheetApp.openByUrl(umtMaintenanceDashBoardURL);
   var umtDailyEmailSheet = umtMaintenanceDashboard.getSheetByName("Daily Email");
 
   var umtInProgressDataCells = ["H8","I8","J8","K8","L8"];
@@ -399,7 +398,7 @@ function ADDENTRY() {
       // Create the input data in order to match the columns order.// ADD an EMPTY STRING FOR PATCH NUMBER COLUMN.
       var valuesList = [patchID,queueDate,issue,purpose,type,product,priority,owner,component,status,"",acceptedDate];
 
-      // Get user conset to add the issue.
+      // Get user consent to add the issue.
       var getConsentFromUI = ui.alert("Do you want to add the entry to the issues list?", ui.ButtonSet.YES_NO);
 
       // Update the DB.
@@ -407,13 +406,42 @@ function ADDENTRY() {
         for(var column = 1; column < 13;column = column + 1){
           targetSheet.getRange(lastRow,column ).setValue(valuesList[column-1]);
         }
-        ui.alert("Entry successfully added to the database with ID : "+patchID);
+        createUMTEntry(valuesList);
+        ui.alert("Entry successfully added to the database with ID : " + patchID);
         setDefaultValuesInAddPatchEntry(activeSheet);
       }
     } else {
       Logger.log("ADDENTRY: Invalid entry");
     }
   }
+}
+
+/**
+ * Create an entry in the UMT dashboard. This will be used to create a corresponding entry in the UMT. Return the
+ * corresponding UMT ID.
+ *
+ * @param {*} addPatchDataArray Data array from the PMT entry.
+ */
+function createUMTEntry(addPatchDataArray){
+
+    // Get UMT maintenance dashboard.
+     var umtMaintenanceDashboard = SpreadsheetApp.openByUrl(umtMaintenanceDashBoardURL);
+
+    // Get the patch database sheet.
+    var umtDailyEmailSheet = umtMaintenanceDashboard.getSheetByName(patchDBSheetName);
+
+    // Get the last row of the issue entries.
+    var lastRow = umtDailyEmailSheet.getLastRow();
+    lastRow = lastRow + 1;
+
+    var patchID = lastRow-1;
+    umtDailyEmailSheet.getRange(lastRow,1).setValue(patchID);
+
+    // Here we need to start from the 2nd index since we need to discard PMT update ID.
+    for(var column = 2; column < 13;column = column + 1){
+      umtDailyEmailSheet.getRange(lastRow,column ).setValue(addPatchDataArray[column-1]);
+    }
+    return patchID;
 }
 
 /**
