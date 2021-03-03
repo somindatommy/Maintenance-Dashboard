@@ -232,8 +232,71 @@ function DETAILED_DAILY_RECORD() {
   Logger.log("Daily data recorded successfully");
   //var testString = "{{inProgressBugs}},{{inProgressFeatures}},{{inProgressSec}},{{inProgressConnector}},{{inProgressTotal}}";
   //replacePlaceHolders(testString,objectArray);
-  SEND_DAILY_EMAIL(objectArray);
+  var umtObjectArray = UPDATE_U2_DETAILS();
+  var totalObjectArray = objectArray.concat(umtObjectArray);
+  SEND_DAILY_EMAIL(totalObjectArray);
   Logger.log("Daily patch summary email sent successfully");
+}
+
+/**
+ * This function retrieves status of the updates from the UMT maintenance sheet and include to the daily email.
+ */
+function UPDATE_U2_DETAILS(){
+
+  var umtMaintenanceDbURL = "https://docs.google.com/spreadsheets/d/1tIkemy9N4drE6vkxRZopBHJhvOM1DmuLoqmnV8JuCz4/edit?usp=sharing"
+  var umtMaintenanceDashboard = SpreadsheetApp.openByUrl(umtMaintenanceDbURL);
+  var umtDailyEmailSheet = umtMaintenanceDashboard.getSheetByName("Daily Email");
+
+  var umtInProgressDataCells = ["H8","I8","J8","K8","L8"];
+  var umtStagingDataCells = ["H9","I9","J9","K9","L9"];
+  var umtSigningDataCells = ["H10","I10","J10","K10","L10"];
+  var umtNotStartedCustomerDataCells = ["H11","I11","J11","K11","L11"];
+  var umtNotStartedInternalDataCells = ["H12","I12","J12","K12","L12"];
+  var umtUnassignedCustomerDataCells = ["H13","I13","J13","K13","L13"];
+  var umtUnassignedInternalDataCells = ["H14","I14","J14","K14","L14"];
+  var umtTotalTotalDataCells = ["H15","I15","J15","K15","L15"];
+
+  var umtDataCells = [umtInProgressDataCells, umtStagingDataCells, umtSigningDataCells, umtNotStartedCustomerDataCells, umtNotStartedInternalDataCells, umtUnassignedCustomerDataCells,
+    umtUnassignedInternalDataCells, umtTotalTotalDataCells];
+
+  // Data keys.  These are the keys in the email template.
+  var umtObjectKeys = [
+    ["umtInProgressBugs","umtInProgressFeatures","umtInProgressSec","umtInProgressConnector","umtInProgressTotal"],
+    ["umtStagingBugs","umtStagingFeatures","umtStagingSec","umtStagingConnector","umtStagingTotal"],
+    ["umtSigningBugs","umtSigningFeatures","umtSigningSec","umtSigningConnector","umtSigningTotal"],
+    ["umtNotStartedCustBugs","umtNotStartedCustFeatures","umtNotStartedCustSec","umtNotStartedCustConnector","umtNotStartedCustTotal"],
+    ["umtNotStartedIntBugs","umtNotStartedIntFeatures","umtNotStartedIntSec","umtNotStartedIntConnector","umtNotStartedIntTotal"],
+    ["umtUnassignedCustBugs","umtUnassignedCustFeatures","umtUnassignedCustSec","umtUnassignedCustConnector","umtUnassignedCustTotal"],
+    ["umtUnassignedIntBugs","umtUnassignedIntFeatures","umtUnassignedIntSec","umtUnassignedIntConnector","umtUnassignedIntTotal"],
+    ["umtTotalBugs","umtTotalFeatures","umtTotalSec","umtTotalConnector","umtTotalTotal"],
+  ];
+
+
+  // Count the number of input fields in the sheet.
+  var totalInputFields = 0;
+  for (var count = 0; count < umtDataCells.length ; count = count + 1) {
+    var umtDataCellArray = umtDataCells[count];
+    for(var count2 = 0; count2 < umtDataCellArray.length; count2 = count2 + 1){
+      totalInputFields++;
+    }
+  }
+
+  // Create list for placeholder map.
+  var umtObjectArray = new Array(totalInputFields);
+
+  var columnCounter = 1;
+  for (var count = 0; count < umtDataCells.length ; count = count + 1) {
+    var umtDataCellArray = umtDataCells[count];
+    var umtKeyArray = umtObjectKeys[count];
+    for(var count2 = 0; count2 < umtDataCellArray.length; count2 = count2 + 1){
+
+      // Build the key value pair for email template placeholders.
+      var value = umtDailyEmailSheet.getRange(umtDataCellArray[count2]).getValue();
+      umtObjectArray[columnCounter - 1] = {[umtKeyArray[count2]]:value};
+      columnCounter = columnCounter + 1;
+    }
+  }
+  return umtObjectArray;
 }
 
 //======================ON OPEN=============================ON OPEN=======================================ON OPEN==================
@@ -859,4 +922,173 @@ function replacePlaceHolders(template,objectArray){
   }
   //Logger.log(template);
   return template;
+}
+
+//===============Post Patch Analysis======================================
+//=================================================================================================================================
+
+function PERFORM_ANALYSIS() {
+
+  var spreadSheetApp = SpreadsheetApp;
+  var postAnalysisEMAILSheetName = "Post Analysis Weekly Mail set";
+  var postAnalysisEMAICountSheetName = "Post Analysis Weekly Email";
+  var postDBSheet =spreadSheetApp.getActiveSpreadsheet().getSheetByName(postAnalysisEMAILSheetName);
+  var postCountSheet = spreadSheetApp.getActiveSpreadsheet().getSheetByName(postAnalysisEMAICountSheetName);
+
+  var DeveloperTeamName = "Developer Experience";
+  var ConsumerTeamName = "Consumer Experience";
+  var EcoTeamName = "Eco System";
+  var GatewayTeamName = "Identity Gateway";
+  var CloudTeamName = "IAM Cloud Deployment";
+
+  // Get post analysis from sheet Processing Post Analysis.
+  var lastRow = postDBSheet.getLastRow() + 1;
+  var dataRange = "B3:G" + lastRow
+  var data = postDBSheet.getRange(dataRange).getValues();
+  var DeveloperTeamData = new Array;
+  var ConsumerTeamData = new Array;
+  var GatewayTeamData = new Array;
+  var EcoTeamData = new Array;
+  var CloudTeamData = new Array;
+
+  for (i in data) {
+
+    if (data[i][4] == DeveloperTeamName) {
+      DeveloperTeamData.push([data[i][0], data[i][1], data[i][2], data[i][3], data[i][5]])
+      // ui.alert("Developer Data : " + data[i][0] + "  " + data[i][1]);
+    }
+    if (data[i][4] == ConsumerTeamName) {
+      ConsumerTeamData.push([data[i][0], data[i][1], data[i][2], data[i][3], data[i][5]])
+      // ui.alert("Developer Data : " + data[i][0] + "  " + data[i][1]);
+    }
+    if (data[i][4] == CloudTeamName) {
+      CloudTeamData.push([data[i][0], data[i][1], data[i][2], data[i][3], data[i][5]])
+      // ui.alert("Developer Data : " + data[i][0] + "  " + data[i][1]);
+    }
+    if (data[i][4] == GatewayTeamName) {
+      GatewayTeamData.push([data[i][0], data[i][1], data[i][2], data[i][3], data[i][5]])
+      // ui.alert("Developer Data : " + data[i][0] + "  " + data[i][1]);
+    }
+    if (data[i][4] == EcoTeamName) {
+      EcoTeamData.push([data[i][0], data[i][1], data[i][2], data[i][3], data[i][5]])
+      // ui.alert("Developer Data : " + data[i][0] + "  " + data[i][1]);
+    }
+  }
+
+  var FinalTeamTable = "";
+  if (DeveloperTeamData.length > 0) {
+    var DeveloperTeamTable = createTeamTable(DeveloperTeamName, DeveloperTeamData);
+    // Logger.log("Developer Data : " + DeveloperTeamTable);
+    FinalTeamTable = DeveloperTeamTable;
+  }
+  if (ConsumerTeamData.length > 0) {
+    var ConsumerTeamTable = createTeamTable(ConsumerTeamName, ConsumerTeamData);
+    // Logger.log("Consumer Data : " + ConsumerTeamTable);
+    FinalTeamTable = FinalTeamTable + ConsumerTeamTable
+  }
+  if (GatewayTeamData.length > 0) {
+    var GatewayTeamTable = createTeamTable(GatewayTeamName, GatewayTeamData);
+    // Logger.log(GatewayTeamName + " : " + GatewayTeamTable);
+    FinalTeamTable = FinalTeamTable + GatewayTeamTable
+  }
+  if (EcoTeamData.length > 0) {
+    var EcoTeamTable = createTeamTable(EcoTeamName, EcoTeamData);
+    // Logger.log(EcoTeamName + " : " + EcoTeamTable);
+    FinalTeamTable = FinalTeamTable + EcoTeamTable
+  }
+  if (CloudTeamData.length > 0) {
+    var CloudTeamTable = createTeamTable(CloudTeamName, CloudTeamData);
+    // Logger.log(CloudTeamName + " : " + CloudTeamTable);
+    FinalTeamTable = FinalTeamTable + CloudTeamTable
+  }
+
+   // Email analyisis data
+   var analysisTotalCountArray = ["I8", "I9", "I10", "I11", "I12", "I13"];
+   var analysisTCorder=["consumer_experience_count", "developer_experience_count", "cloud_deploymenty_count", "identity_gateway_count", "eco_systemy_count", "total_count"];
+
+   // Date.
+   var dateDataCells = ["A2"];
+
+  //Get date range from sheet Processing Post Analysis.
+  var weekrange= postDBSheet.getRange(dateDataCells[0]).getValue();
+
+  Logger.log(" Week range : " + weekrange);
+   // Count the number of input fields in the sheet.
+   var totalInputFields = analysisTCorder.length + 2;
+
+   // Create list for placeholder map.
+  var objectArray = new Array();
+
+  var columnCounter = 1;
+  for (var count = 0; count < analysisTCorder.length ; count = count + 1) {
+
+      // Build the key value pair for email template placeholders.
+      var value = postCountSheet.getRange(analysisTotalCountArray[count]).getValue();
+      objectArray[count] = {[analysisTCorder[count]]:value};
+
+      // // Add to sheet.
+      // detailedDailyRecordingsSheet.getRange(lastRow, columnCounter).setValue(value);
+      // columnCounter = columnCounter + 1;
+
+  }
+
+  // Set Date
+  objectArray[analysisTCorder.length] = {["week_range"]:weekrange};
+
+  // Set teamTable
+  objectArray[analysisTCorder.length+1] = {["team_table"]:FinalTeamTable};
+
+  Logger.log(objectArray);
+
+ SEND_ANALYSIS_WEEKLY_EMAIL(objectArray,weekrange);
+}
+
+function createTeamTable(teamName, dataArray) {
+  var tableHeading = "<table class=\"table\" style=\"width: 100%;\"> <tbody> <tr> <th style=\"width: 15%;\">Update Number</th> <th style=\"width: 30%;\">Issue summary</th> <th style=\"width: 30%;\">Solution Summary</th> <th style=\"width: 15%;\">Component</th> <th style=\"width: 10%;\">Issue Type</th> </tr>";
+  var tableEnding = "</tbody> </table>";
+  var finalTable = "<h1>" + teamName + "</h1>" + tableHeading;
+  for (var counter = 0; counter < dataArray.length; counter = counter + 1) {
+    var analysisEntry = dataArray[counter];
+    if (!isEmpty(analysisEntry)) {
+      var rowdata = "<tr>";
+      for (i in analysisEntry) {
+        rowdata = rowdata + "<td>" + analysisEntry[i] + "</td>";
+      }
+      rowdata = rowdata + "</tr>";
+      finalTable = finalTable + rowdata;
+    }
+  }
+  finalTable = finalTable + tableEnding;
+  return finalTable;
+}
+
+/**
+ * Send Daily Email.
+ *
+ * @param {*} objectArray Placeholder map as key value pairs.
+ */
+function SEND_ANALYSIS_WEEKLY_EMAIL(objectArray,weekRange) {
+
+  var emailTemplate = HtmlService.createTemplateFromFile("weeklyAnalysisEmailTemplate");
+
+  // Get the sheet where the data is in.
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Analysis Email Settings");
+
+  var subjectOfTheMail = sheet.getRange("B6").getValue() + " " +weekRange;
+  var sendTo = sheet.getRange("B8").getValue();
+  var ccList = sheet.getRange("B9").getValue();
+
+  var htmlMsg = emailTemplate.evaluate().getContent();
+  var emailBody = replacePlaceHolders(htmlMsg,objectArray);
+
+  // References: https://developers.google.com/apps-script/reference/gmail/gmail-app#sendemailrecipient,-subject,-body,-options
+  GmailApp.sendEmail(
+    sendTo,
+    subjectOfTheMail,
+    "Your mailing app does not support HTML. Contact sominda@wso2.com or try with a different app.",
+    {
+      cc: ccList,
+      htmlBody: emailBody
+    }
+  );
 }
